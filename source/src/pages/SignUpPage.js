@@ -1,5 +1,6 @@
 import {Component} from "react";
 import axios from "axios";
+import Input from "../components/input";
 
 class SignUpPage extends Component {
     state = {
@@ -8,6 +9,7 @@ class SignUpPage extends Component {
         password: "",
         passwordRepeat: "",
         apiProgress: false,
+        errors: {}
     };
 
     onChange = (event) => {
@@ -28,8 +30,12 @@ class SignUpPage extends Component {
         try {
             await axios.post("/api/1.0/users", body);
             this.setState({signUpSuccess: true})
+            this.setState({apiProgress: true})
         } catch (error) {
-            console.log(error)
+            if (error.response.status === 400) {
+                this.setState(({errors: error.response.data.validationErrors}))
+            }
+            this.setState({apiProgress: false})
         }
         //  fetch("/api/1.0/users", {
         //      method: 'POST',
@@ -42,7 +48,7 @@ class SignUpPage extends Component {
 
     render() {
         let disabled = true;
-        const {password, passwordRepeat, apiProgress, signUpSuccess} = this.state;
+        const {password, passwordRepeat, apiProgress, signUpSuccess, errors} = this.state;
         if (password && passwordRepeat) {
             disabled = password !== passwordRepeat;
         }
@@ -54,31 +60,23 @@ class SignUpPage extends Component {
                     </div>
 
                     <div className="card-body">
+                        {/*<div className="mb-3">*/}
+                        {/*    <input className="form-control" id="username" placeholder="username"*/}
+                        {/*           onChange={this.onChange}/>*/}
+                        {/*    <span>{errors.username}</span>*/}
+                        {/*</div>*/}
+                        <Input id='username' type='text' placeholder='username' onChange={this.onChange}
+                               error={errors.username}/>
+                        <Input id='email' placeholder='email' type='email' onChange={this.onChange}
+                               error={errors.email}/>
                         <div className="mb-3">
-                            <input className="form-control" id="username" placeholder="username"
-                                   onChange={this.onChange}/>
+                            <Input id='password' type='password' placeholder='password' onChange={this.onChange}
+                                   error={errors.password}/>
                         </div>
                         <div className="mb-3">
-                            <input className="form-control" type="email" id="email" placeholder="email"
-                                   onChange={this.onChange}/>
-                        </div>
-                        <div className="mb-3">
-                            <input
-                                className="form-control"
-                                id="password"
-                                type="password"
-                                placeholder="password"
-                                onChange={this.onChange}
-                            />{" "}
-                        </div>
-                        <div className="mb-3">
-                            <input
-                                className="form-control"
-                                id="passwordRepeat"
-                                type="password"
-                                placeholder="repeat password"
-                                onChange={this.onChange}
-                            />{" "}
+                            <Input id='passwordRepeat' type='password' placeholder='repeat password'
+                                   onChange={this.onChange} error={" "}/>
+
                         </div>
                         <div className="mb-3 text-center">
                             <button className="btn btn-primary" disabled={disabled || apiProgress} type="submit"

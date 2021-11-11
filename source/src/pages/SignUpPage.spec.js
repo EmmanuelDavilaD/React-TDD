@@ -68,7 +68,8 @@ describe("Sign Up Page", () => {
         beforeAll(() => server.listen())
         afterAll(() => server.close())
         beforeEach(() => {
-            counter = 0
+            counter = 0;
+            server.restoreHandlers()
         })
 
         let button;
@@ -79,8 +80,8 @@ describe("Sign Up Page", () => {
             const emailInputRepeat = screen.getByPlaceholderText("email");
             const passwordInput = screen.getByPlaceholderText("password");
             const passwordInputRepeat = screen.getByPlaceholderText("repeat password");
-            userEvent.type(userNameInput, "pepito")
-            userEvent.type(emailInputRepeat, "pepito@mail.com")
+            userEvent.type(userNameInput, "pepito1")
+            userEvent.type(emailInputRepeat, "pepito1@mail.com")
             userEvent.type(passwordInput, "p4ssword")
             userEvent.type(passwordInputRepeat, "p4ssword")
             button = screen.queryByRole("button", {name: "Sign Up"});
@@ -99,8 +100,8 @@ describe("Sign Up Page", () => {
             await new Promise(resolve => setTimeout(resolve, 500))
 
             expect(requestBody).toEqual({
-                username: 'pepito',
-                email: 'pepito@mail.com',
+                username: 'pepito1',
+                email: 'pepito1@mail.com',
                 password: 'p4ssword'
             });
         });
@@ -157,5 +158,70 @@ describe("Sign Up Page", () => {
              */
             // await waitForElementToBeRemoved(form);
         });
+        it('displays validation message for username ', async () => {
+            server.use(
+                rest.post("/api/1.0/users", (req, res, ctx) => {
+                    return res(ctx.status(400),
+                        ctx.json({
+                            validationErrors: {username: "Username cannot be null"}
+                        }));
+                })
+            )
+
+            setup()
+            userEvent.click(button)
+            const validationError = await screen.findByText("Username cannot be null")
+            expect(validationError).toBeInTheDocument()
+        });
+
+        it('displays validation message for email ', async () => {
+            server.use(
+                rest.post("/api/1.0/users", (req, res, ctx) => {
+                    return res.once(ctx.status(400),
+                        ctx.json({
+                            validationErrors: {username: "E-mail cannot be null"}
+                        }));
+                })
+            )
+
+            setup()
+            userEvent.click(button)
+            const validationError = await screen.findByText("E-mail cannot be null")
+            expect(validationError).toBeInTheDocument()
+        });
+
+
+        it('displays validation message for password ', async () => {
+            server.use(
+                rest.post("/api/1.0/users", (req, res, ctx) => {
+                    return res.once(ctx.status(400),
+                        ctx.json({
+                            validationErrors: {username: "Password must be at least 6 characters"}
+                        }));
+                })
+            )
+
+            setup()
+            userEvent.click(button)
+            const validationError = await screen.findByText("Password must be at least 6 characters")
+            expect(validationError).toBeInTheDocument()
+        });
+        it('hides spinner and enables button after response recived', async () => {
+            server.use(
+                rest.post("/api/1.0/users", (req, res, ctx) => {
+                    return res.once(ctx.status(400),
+                        ctx.json({
+                            validationErrors: {username: "Password must be at least 6 characters"}
+                        }));
+                })
+            )
+
+            setup()
+            userEvent.click(button)
+            await screen.findByText("Password must be at least 6 characters")
+            expect(screen.queryByRole("status")).not.toBeInTheDocument();
+            expect(button).toBeEnabled();
+        });
+
     })
 });
