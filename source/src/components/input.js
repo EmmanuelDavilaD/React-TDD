@@ -1,10 +1,15 @@
 const Input = (props) =>{
-    const {id,placeholder,onChange,error, type} = props
+
+    const {id,placeholder,onChange,error, type} = props;
+    let inputClass = "form-control";
+    if(error){
+        inputClass += " is-invalid"
+    }
     return (
         <div className="mb-3">
-            <input className="form-control" id={id} type={type} placeholder={placeholder}
+            <input className={inputClass} id={id} type={type} placeholder={placeholder}
                    onChange={onChange}/>
-            <span>{error}</span>
+            {error && <span className="invalid-feedback">{error}</span>}
         </div>
     )
 }

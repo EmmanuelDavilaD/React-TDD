@@ -3,7 +3,9 @@ import {render, screen, waitFor} from "@testing-library/react";
 import userEvent from '@testing-library/user-event'
 import {setupServer} from "msw/node"
 import {rest} from "msw"
-
+import "../locale/i18n";
+import es  from "../locale/es.json"
+import en  from "../locale/en.json"
 describe("Sign Up Page", () => {
     describe("Layout", () => {
         it("has header", () => {
@@ -13,32 +15,32 @@ describe("Sign Up Page", () => {
         });
         it("has username input", () => {
             const {container} = render(<SignUpPage/>);
-            const input = screen.getByPlaceholderText("username");
+            const input = screen.getByPlaceholderText("Username");
             expect(input).toBeInTheDocument();
         });
         it("has email input", () => {
             const {container} = render(<SignUpPage/>);
-            const input = screen.getByPlaceholderText("email");
+            const input = screen.getByPlaceholderText("E-mail");
             expect(input).toBeInTheDocument();
         });
         it("has password input", () => {
             const {container} = render(<SignUpPage/>);
-            const input = screen.getByPlaceholderText("password");
+            const input = screen.getByPlaceholderText("Password");
             expect(input).toBeInTheDocument();
         });
         it("has password type", () => {
             const {container} = render(<SignUpPage/>);
-            const input = screen.getByPlaceholderText("password");
+            const input = screen.getByPlaceholderText("Password");
             expect(input.type).toBe('password');
         });
         it("has password repeat input", () => {
             const {container} = render(<SignUpPage/>);
-            const input = screen.getByPlaceholderText("repeat password");
+            const input = screen.getByPlaceholderText("Repeat Password");
             expect(input).toBeInTheDocument();
         });
         it("has password repeat type", () => {
             const {container} = render(<SignUpPage/>);
-            const input = screen.getByPlaceholderText("repeat password");
+            const input = screen.getByPlaceholderText("Repeat Password");
             expect(input.type).toBe('password');
         });
         it("has Sign Up button", () => {
@@ -72,16 +74,16 @@ describe("Sign Up Page", () => {
             server.restoreHandlers()
         })
 
-        let button;
+        let button, usernameInput, emailInput, passwordInput, passwordInputRepeat;
 
         const setup = () => {
             render(<SignUpPage/>);
-            const userNameInput = screen.getByPlaceholderText("username");
-            const emailInputRepeat = screen.getByPlaceholderText("email");
-            const passwordInput = screen.getByPlaceholderText("password");
-            const passwordInputRepeat = screen.getByPlaceholderText("repeat password");
-            userEvent.type(userNameInput, "pepito1")
-            userEvent.type(emailInputRepeat, "pepito1@mail.com")
+            usernameInput = screen.getByPlaceholderText("Username");
+            emailInput = screen.getByPlaceholderText("E-mail");
+            passwordInput = screen.getByPlaceholderText("Password");
+            passwordInputRepeat = screen.getByPlaceholderText("Repeat Password");
+            userEvent.type(usernameInput, "pepito1")
+            userEvent.type(emailInput, "pepito1@mail.com")
             userEvent.type(passwordInput, "p4ssword")
             userEvent.type(passwordInputRepeat, "p4ssword")
             button = screen.queryByRole("button", {name: "Sign Up"});
@@ -158,6 +160,25 @@ describe("Sign Up Page", () => {
              */
             // await waitForElementToBeRemoved(form);
         });
+
+        it.each`
+        field         | message
+        ${"username"} | ${"Username cannot be null"}
+         ${"email"} | ${"E-mail cannot be null"}
+        `("displays $message for $fields", async ({field, message}) => {
+            server.use(
+                rest.post("/api/1.0/users", (req, res, ctx) => {
+                    return res(ctx.status(400),
+                        ctx.json({
+                            validationErrors: {[field]: [message]}
+                        }));
+                })
+            )
+            setup()
+            userEvent.click(button)
+            const validationError = await screen.findByText(message)
+            expect(validationError).toBeInTheDocument()
+        })
         it('displays validation message for username ', async () => {
             server.use(
                 rest.post("/api/1.0/users", (req, res, ctx) => {
@@ -222,6 +243,61 @@ describe("Sign Up Page", () => {
             expect(screen.queryByRole("status")).not.toBeInTheDocument();
             expect(button).toBeEnabled();
         });
+        it('displays mismatch message for password repeat input', function () {
+            setup()
+            userEvent.type(passwordInput, 'P4ssword')
+            userEvent.type(passwordInputRepeat, 'AnotherP4ssword')
+            const validationError = screen.queryByText(("Password mismatch"))
+            expect(validationError).toBeInTheDocument()
+        });
 
+        it('Clears validation error after username field is updated', async () => {
+            server.use(
+                rest.post("/api/1.0/users", (req, res, ctx) => {
+                    return res.once(ctx.status(400),
+                        ctx.json({
+                            validationErrors: {username: "Password must be at least 6 characters"}
+                        }));
+                })
+            )
+            setup()
+            userEvent.click(button)
+            const validationError = await screen.findByText("Password must be at least 6 characters")
+            userEvent.type(usernameInput, "pepito1-update")
+            expect(validationError).not.toBeInTheDocument()
+        });
+    });
+    describe("Internationalization",() =>{
+        it("Initially displays all text in English",()=>{
+            render(<SignUpPage/>);
+            expect(screen.getByRole("heading", {name: en.signUp})).toBeInTheDocument();
+            expect(screen.getByRole("button", {name:  en.signUp})).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( en.username)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( en.email)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( en.password)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( en.passwordRepeat)).toBeInTheDocument();
+        })
+        it("Initially displays all text in Spanish after change the language",()=>{
+            render(<SignUpPage/>);
+           const spanishToggle = screen.getByTitle("español");
+           userEvent.click(spanishToggle);
+            expect(screen.getByRole("heading", {name: es.signUp})).toBeInTheDocument();
+            expect(screen.getByRole("button", {name:  es.signUp})).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( es.username)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( es.email)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( es.password)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( es.passwordRepeat)).toBeInTheDocument();
+        })
+        it("Initially displays all text in English after change the language",()=>{
+            render(<SignUpPage/>);
+            const englishToggle = screen.getByTitle("english");
+            userEvent.click(englishToggle);
+            expect(screen.getByRole("heading", {name: en.signUp})).toBeInTheDocument();
+            expect(screen.getByRole("button", {name:  en.signUp})).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( en.username)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( en.email)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( en.password)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText( en.passwordRepeat)).toBeInTheDocument();
+        })
     })
 });
