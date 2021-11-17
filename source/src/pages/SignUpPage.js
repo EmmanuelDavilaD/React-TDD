@@ -66,7 +66,7 @@ class SignUpPage extends Component {
         if (password && passwordRepeat) {
             disabled = password !== passwordRepeat;
         }
-        let passwordMismatch = password !== passwordRepeat ? "Password mismatch" : "";
+        let passwordMismatch = password !== passwordRepeat ? t('passwordMismatchValidation') : "";
         return (
             <div className="col-lg-6 offset-lg-3 col-md-8 offset-md-2 col-sm-12">
                 {!signUpSuccess && <form className="card mt-5" data-testid="form-sign-up">
@@ -105,8 +105,6 @@ class SignUpPage extends Component {
                 </form>}
                 {signUpSuccess &&
                 <div className="alert alert-primary mt-3">Please check your e-mail to activate your account</div>}
-                <span className="btn btn-primary m-1" title={"español"} onClick={() => this.props.i18n.changeLanguage('es')}>ES</span>
-                <span className="btn btn-primary m-1" title={"english"} onClick={() =>this.props.i18n.changeLanguage('en')}>EN</span>
             </div>
         );
     }

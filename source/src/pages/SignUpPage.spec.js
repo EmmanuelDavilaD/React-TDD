@@ -1,11 +1,13 @@
 import SignUpPage from "./SignUpPage";
-import {render, screen, waitFor} from "@testing-library/react";
+import {act, render, screen, waitFor} from "@testing-library/react";
 import userEvent from '@testing-library/user-event'
 import {setupServer} from "msw/node"
 import {rest} from "msw"
-import "../locale/i18n";
-import es  from "../locale/es.json"
-import en  from "../locale/en.json"
+import i18n from "../locale/i18n";
+import es from "../locale/es.json"
+import en from "../locale/en.json"
+import LanguageSelector from "../components/LanguageSelector";
+
 describe("Sign Up Page", () => {
     describe("Layout", () => {
         it("has header", () => {
@@ -267,37 +269,75 @@ describe("Sign Up Page", () => {
             expect(validationError).not.toBeInTheDocument()
         });
     });
-    describe("Internationalization",() =>{
-        it("Initially displays all text in English",()=>{
-            render(<SignUpPage/>);
+    describe("Internationalization", () => {
+
+        afterEach(() => {
+            act(() => {
+                i18n.changeLanguage("en");
+            })
+        })
+
+
+        it("Initially displays all text in English", () => {
+            render(
+                <>
+                    <SignUpPage/>
+                    <LanguageSelector/>
+                </>);
+
             expect(screen.getByRole("heading", {name: en.signUp})).toBeInTheDocument();
-            expect(screen.getByRole("button", {name:  en.signUp})).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( en.username)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( en.email)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( en.password)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( en.passwordRepeat)).toBeInTheDocument();
+            expect(screen.getByRole("button", {name: en.signUp})).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(en.username)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(en.email)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(en.password)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(en.passwordRepeat)).toBeInTheDocument();
         })
-        it("Initially displays all text in Spanish after change the language",()=>{
-            render(<SignUpPage/>);
-           const spanishToggle = screen.getByTitle("español");
-           userEvent.click(spanishToggle);
+        it("Initially displays all text in Spanish after change the language", () => {
+            render(
+                <>
+                    <SignUpPage/>
+                    <LanguageSelector/>
+                </>);
+            const spanishToggle = screen.getByTitle("español");
+            userEvent.click(spanishToggle);
             expect(screen.getByRole("heading", {name: es.signUp})).toBeInTheDocument();
-            expect(screen.getByRole("button", {name:  es.signUp})).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( es.username)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( es.email)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( es.password)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( es.passwordRepeat)).toBeInTheDocument();
+            expect(screen.getByRole("button", {name: es.signUp})).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(es.username)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(es.email)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(es.password)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(es.passwordRepeat)).toBeInTheDocument();
         })
-        it("Initially displays all text in English after change the language",()=>{
-            render(<SignUpPage/>);
+        it("Initially displays all text in English after change the language", () => {
+            render(
+                <>
+                    <SignUpPage/>
+                    <LanguageSelector/>
+                </>);
             const englishToggle = screen.getByTitle("english");
             userEvent.click(englishToggle);
             expect(screen.getByRole("heading", {name: en.signUp})).toBeInTheDocument();
-            expect(screen.getByRole("button", {name:  en.signUp})).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( en.username)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( en.email)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( en.password)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText( en.passwordRepeat)).toBeInTheDocument();
+            expect(screen.getByRole("button", {name: en.signUp})).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(en.username)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(en.email)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(en.password)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(en.passwordRepeat)).toBeInTheDocument();
         })
+
+        it("displays password mismatch valitarion in spanish", () => {
+                render(
+                    <>
+                        <SignUpPage/>
+                        <LanguageSelector/>
+                    </>);
+
+                const spanishToggle = screen.getByTitle("español");
+                userEvent.click(spanishToggle);
+
+                const passwordInput = screen.getByPlaceholderText(es.password);
+                userEvent.type(passwordInput, "P4ss");
+                const passwordMismatchValidation = screen.queryByText(es.passwordMismatchValidation);
+                expect(passwordMismatchValidation).toBeInTheDocument()
+            }
+        )
     })
 });
